@@ -230,7 +230,7 @@ static void parse_options(int argc, char **argv)
          errx(EXIT_FAILURE, "too many parameters (see --help for usage)");
 
       if (!freopen((input_name = argv[optind++]), "rb", stdin))
-         err(EXIT_FAILURE, input_name);
+         err(EXIT_FAILURE, "%s", input_name);
    }
 }
 
@@ -257,7 +257,7 @@ static size_t load_program()
 
       if (ferror(stdin)) {
          fclose(stdin);
-         err(EXIT_FAILURE, input_name);
+         err(EXIT_FAILURE, "%s", input_name);
       }
    }
 
