@@ -13,6 +13,7 @@
 // ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+#define _GNU_SOURCE
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,7 +41,7 @@ static void handle_exit(void);
 static void parse_options(int argc, char **argv);
 static size_t load_program(void);
 static void *xcalloc(size_t);
-static void *xrealloc(void *, size_t);
+static void *xreallocarray(void *, size_t, size_t);
 
 int main(int argc, char **argv)
 {
@@ -126,7 +127,7 @@ int main(int argc, char **argv)
          case '[': /* recursive loop start */
             if (loop_depth >= loop_max_depth) {
                loop_max_depth += LOOP_EXPAND_SIZE;
-               loop_pointers = xrealloc(loop_pointers, loop_max_depth * sizeof(size_t));
+               loop_pointers = xreallocarray(loop_pointers, loop_max_depth, sizeof(size_t));
             }
 
             if (memory[cursor / 8] & 1 << cursor % 8) {
@@ -273,9 +274,9 @@ static void *xcalloc(size_t size)
    return ptr;
 }
 
-static void *xrealloc(void *ptr, size_t size)
+static void *xreallocarray(void *ptr, size_t nmemb, size_t size)
 {
-   if (!(ptr = realloc(ptr, size)))
+   if (!(ptr = reallocarray(ptr, nmemb, size)))
       err(EXIT_FAILURE, "failed to reallocate memory");
 
    return ptr;
