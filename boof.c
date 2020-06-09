@@ -293,8 +293,7 @@ static size_t load_program()
       }
 
       fclose(input_file);
-   }
-   else {
+   } else {
       size_t limit = 0;
 
       while (!feof(input_file)) {
