@@ -16,9 +16,8 @@
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdnoreturn.h>
 #include <string.h>
-#include <errno.h>
+#include <getopt.h>
 
 enum
 {
@@ -47,8 +46,6 @@ static unsigned long line = 0, column = 0;
 static void handle_exit (void);
 static void parse_options (int argc, char **argv);
 static size_t load_program (void);
-static void print_help (const char *argv0);
-static void print_version (void);
 
 int main(int argc, char **argv)
 {
@@ -222,39 +219,44 @@ static void handle_exit()
 
 static void parse_options(int argc, char **argv)
 {
-   int i = 1, end_of_args = 0;
+   enum { OPT_HELP, OPT_VERSION };
 
-   for (; i < argc; ++i) {
-      if (argv[i][0] == '-' && !end_of_args) {
-         if (argv[i][1] == '-') {
-            if (argv[i][2] == 0) {
-               end_of_args = 1;
-            } else if (!strcmp(argv[i], "--help")) {
-               print_help(argv[0]);
-               exit(EXIT_SUCCESS);
-            } else if (!strcmp(argv[i], "--version")) {
-               print_version();
-               exit(EXIT_SUCCESS);
-            } else {
-               errx(EXIT_FAILURE, "unrecognized option (accepts either --help or --version)");
-            }
-         } else if (argv[i][1] == 'h') {
-            print_help(argv[0]);
-            exit(EXIT_SUCCESS);
-         } else if (argv[i][1] == 'V') {
-            print_version();
-            exit(EXIT_SUCCESS);
-         } else {
-            errx(EXIT_FAILURE, "unrecognized option (accepts either -h or -V)");
-         }
-      } else if (input_name == NULL) {
-         input_name = argv[i];
+   static const struct option options[] = {
+      { "help", no_argument, 0, OPT_HELP },
+      { "version", no_argument, 0, OPT_VERSION }
+   };
 
-         if (getenv("POSIXLY_CORRECT") != NULL)
-            end_of_args = 1;
-      } else {
-         errx(EXIT_FAILURE, "too many parameters (see --help for usage)");
+   int c, failed = 0;
+
+   while ((c = getopt_long(argc, argv, "", options, NULL)) != -1)
+      switch (c) {
+      case OPT_HELP:
+         printf("Usage: %s [INPUT-FILE]\n", argv[0]);
+         puts("");
+         puts("Interpret a Boolf### program. If no input file is given, reads standard input.");
+         puts("");
+         puts("Options:");
+         puts("  --help     print this help message and exit");
+         puts("  --version  print version message and exit");
+         exit(EXIT_SUCCESS);
+      case OPT_VERSION:
+         puts("boof " VERSION);
+         exit(EXIT_SUCCESS);
+      case '?':
+         failed = 1;
+         break;
+      default:
+         errx(EXIT_FAILURE, "getopt returned %i", c);
       }
+
+   if (failed)
+      exit(EXIT_FAILURE);
+
+   while (optind < argc) {
+      if (input_name)
+         errx(EXIT_FAILURE, "too many parameters (see --help for usage)");
+
+      input_name = argv[optind++];
    }
 }
 
@@ -317,20 +319,4 @@ static size_t load_program()
    }
 
    return program_size;
-}
-
-static void print_help(const char *argv0)
-{
-   printf("Usage: %s [<input-name>]\n", argv0);
-   puts("");
-   puts("Interpret a Boolf### program. If no input file is given, reads standard input.");
-   puts("");
-   puts("Options:");
-   puts("  -h, --help     print this help message and exit");
-   puts("  -V, --version  print version message and exit");
-}
-
-static void print_version()
-{
-   puts("boof " VERSION);
 }
