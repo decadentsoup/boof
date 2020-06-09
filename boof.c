@@ -196,6 +196,7 @@ static void handle_exit()
 
    if (data != NULL) {
       struct data_part *node = data->prev;
+
       while (node != NULL) {
          struct data_part *temp = node;
          node = node->prev;
@@ -203,6 +204,7 @@ static void handle_exit()
       }
 
       node = data->next;
+
       while (node != NULL) {
          struct data_part *temp = node;
          node = node->next;
@@ -271,8 +273,8 @@ static size_t load_program()
    while (!feof(stdin)) {
       if (program_size >= limit) {
          limit += ALLOC_SIZE;
-         code = realloc(code, limit);
-         if (code == NULL) {
+
+         if (!(code = realloc(code, limit))) {
             fclose(stdin);
             err(EXIT_FAILURE, "failed to reallocate memory");
          }
