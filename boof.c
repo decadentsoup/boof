@@ -38,7 +38,8 @@ static size_t load_program(void);
 static void *xcalloc(size_t);
 static void *xreallocarray(void *, size_t, size_t);
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
 	size_t cursor = 0;
 	unsigned char *memory = NULL;
@@ -151,7 +152,8 @@ int main(int argc, char **argv)
 	return EXIT_SUCCESS;
 }
 
-static void handle_exit()
+static void
+handle_exit()
 {
 	free(code);
 
@@ -178,7 +180,8 @@ static void handle_exit()
 	free(loop_pointers);
 }
 
-static void parse_options(int argc, char **argv)
+static void
+parse_options(int argc, char **argv)
 {
 	enum { OPT_HELP, OPT_VERSION };
 
@@ -222,7 +225,8 @@ static void parse_options(int argc, char **argv)
 	}
 }
 
-static size_t load_program()
+static size_t
+load_program()
 {
 	enum { ALLOC_SIZE = 1024 };
 
@@ -252,7 +256,8 @@ static size_t load_program()
 	return program_size;
 }
 
-static void *xcalloc(size_t size)
+static void *
+xcalloc(size_t size)
 {
 	void *ptr;
 
@@ -262,7 +267,8 @@ static void *xcalloc(size_t size)
 	return ptr;
 }
 
-static void *xreallocarray(void *ptr, size_t nmemb, size_t size)
+static void *
+xreallocarray(void *ptr, size_t nmemb, size_t size)
 {
 	if (!(ptr = reallocarray(ptr, nmemb, size)))
 		err(EXIT_FAILURE, "failed to reallocate memory");
