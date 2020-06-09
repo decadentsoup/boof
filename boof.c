@@ -46,6 +46,8 @@ static unsigned long line, column;
 static void handle_exit(void);
 static void parse_options(int argc, char **argv);
 static size_t load_program(void);
+static void xcalloc(size_t);
+static void xrealloc(void *, size_t);
 
 int main(int argc, char **argv)
 {
@@ -63,8 +65,7 @@ int main(int argc, char **argv)
    parse_options(argc, argv);
    program_size = load_program();
 
-   if (!(data = calloc(1, sizeof(struct data_part))))
-      err(EXIT_FAILURE, "failed to allocate memory");
+   data = xcalloc(1, sizeof(struct data_part));
 
    memory = data->body;
 
@@ -108,11 +109,7 @@ int main(int argc, char **argv)
                --cursor;
             } else {
                if (data->prev == NULL) {
-                  data->prev = calloc(1, sizeof(struct data_part));
-
-                  if (data->prev == NULL)
-                     err(EXIT_FAILURE, "failed to allocate memory");
-
+                  data->prev = xcalloc(1, sizeof(struct data_part));
                   data->prev->next = data;
                }
 
@@ -127,11 +124,7 @@ int main(int argc, char **argv)
                ++cursor;
             } else {
                if (data->next == NULL) {
-                  data->next = calloc(1, sizeof(struct data_part));
-
-                  if (data->next == NULL)
-                     err(EXIT_FAILURE, "failed to allocate memory");
-
+                  data->next = xcalloc(1, sizeof(struct data_part));
                   data->next->prev = data;
                }
 
@@ -144,9 +137,7 @@ int main(int argc, char **argv)
          case '[': /* recursive loop start */
             if (loop_depth >= loop_max_depth) {
                loop_max_depth += LOOP_EXPAND_SIZE;
-               loop_pointers = realloc(loop_pointers, loop_max_depth * sizeof(struct loop_pointer));
-               if (loop_pointers == NULL)
-                  err(EXIT_FAILURE, "failed to reallocate memory");
+               loop_pointers = xrealloc(loop_pointers, loop_max_depth * sizeof(struct loop_pointer));
             }
             if (memory[cursor / 8] & 1 << cursor % 8) {
                loop_pointers[loop_depth].line = line;
@@ -289,4 +280,22 @@ static size_t load_program()
    }
 
    return program_size;
+}
+
+static void xcalloc(size_t size)
+{
+   void *ptr;
+
+   if (!(ptr = calloc(1, size)))
+      err(EXIT_FAILURE, "failed to allocate memory");
+
+   return ptr;
+}
+
+static void xrealloc(void *ptr, size_t size)
+{
+   if (!(ptr = realloc(ptr, size)))
+      err(EXIT_FAILURE, "failed to reallocate memory");
+
+   return ptr;
 }
