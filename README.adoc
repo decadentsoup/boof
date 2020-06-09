@@ -1,6 +1,6 @@
-# Boolf interpreter
+# Boof interpreter
 
-This is a Boolf interpreter that I wrote for fun. Boof is a derivative of the Turing tarpit esoteric programming language Brainf designed around bit manipulating instead of whole integers.
+This is a Boof interpreter that I wrote for fun. Boof is a derivative of the Turing tarpit esoteric programming language Brainf designed around bit manipulating instead of whole integers.
 
 The Boof language is described here: http://samuelhughes.com/boof/
 
@@ -11,6 +11,10 @@ Multiple examples are provided with this distribution and may be passed to the i
 	./boof examples/hello.boof
 
 When no input name is given, the interpreter will read until the first end of file indicator, then continue reading for data.
+
+If you want to run Brainf programs, you can use the included `brain2bool` program to convert it, like so:
+
+	./brain2bool examples/brain/hello.bf | ./boof
 
 ## Copyright and License
 
