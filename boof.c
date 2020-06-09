@@ -137,12 +137,13 @@ main(int argc, char **argv)
 
 			break;
 		case ']': /* recursive loop end */
-			if (loop_depth > 0) {
-				if (memory[cursor / 8] & 1 << cursor % 8)
-					offset = loop_pointers[loop_depth - 1];
-				else
-					--loop_depth;
-			}
+			if (!loop_depth)
+				break;
+
+			if (memory[cursor / 8] & 1 << cursor % 8)
+				offset = loop_pointers[loop_depth - 1];
+			else
+				--loop_depth;
 
 			break;
 		}
