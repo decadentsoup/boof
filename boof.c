@@ -15,6 +15,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdnoreturn.h>
 #include <string.h>
 #include <errno.h>
 
@@ -24,12 +25,6 @@
 
 #ifdef USE_WINDOWS
 #  include <windows.h>
-#endif
-
-#if defined(__GCC__) || defined(__clang__)
-#  define NORET __attribute__((noreturn))
-#else
-#  define NORET /* empty */
 #endif
 
 enum
@@ -63,9 +58,9 @@ static size_t load_program (void);
 static void print_help (void);
 static void print_version (void);
 static const char *get_base_name (const char *name);
-static void error (const char *message) NORET;
-static void errorp (const char *message) NORET;
-static void abort_program (void) NORET;
+static noreturn void error (const char *message);
+static noreturn void errorp (const char *message);
+static noreturn void abort_program (void);
 
 int main(int argc, char **argv)
 {
