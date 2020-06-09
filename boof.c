@@ -22,19 +22,19 @@
 
 enum
 {
-   DATA_PART_BODY_SIZE = 1024,
+   PAGE_SIZE = 1024,
    LOOP_EXPAND_SIZE = 16
 };
 
-struct data_part
+struct page
 {
-   struct data_part *prev, *next;
-   unsigned char body[DATA_PART_BODY_SIZE];
+   struct page *prev, *next;
+   unsigned char body[PAGE_SIZE];
 };
 
 static const char *input_name;
 static char *code;
-static struct data_part *data;
+static struct page *data;
 static size_t *loop_pointers;
 
 static void handle_exit(void);
@@ -59,7 +59,7 @@ int main(int argc, char **argv)
    parse_options(argc, argv);
    program_size = load_program();
 
-   data = xcalloc(sizeof(struct data_part));
+   data = xcalloc(sizeof(struct page));
 
    memory = data->body;
 
@@ -99,22 +99,22 @@ int main(int argc, char **argv)
                --cursor;
             } else {
                if (data->prev == NULL) {
-                  data->prev = xcalloc(sizeof(struct data_part));
+                  data->prev = xcalloc(sizeof(struct page));
                   data->prev->next = data;
                }
 
                data = data->prev;
                memory = data->body;
-               cursor = DATA_PART_BODY_SIZE * 8 - 1;
+               cursor = PAGE_SIZE * 8 - 1;
             }
 
             break;
          case '>': /* select right */
-            if (cursor < DATA_PART_BODY_SIZE * 8 - 1) {
+            if (cursor < PAGE_SIZE * 8 - 1) {
                ++cursor;
             } else {
                if (data->next == NULL) {
-                  data->next = xcalloc(sizeof(struct data_part));
+                  data->next = xcalloc(sizeof(struct page));
                   data->next->prev = data;
                }
 
@@ -168,10 +168,10 @@ static void handle_exit()
    free(code);
 
    if (data != NULL) {
-      struct data_part *node = data->prev;
+      struct page *node = data->prev;
 
       while (node != NULL) {
-         struct data_part *temp = node;
+         struct page *temp = node;
          node = node->prev;
          free(temp);
       }
@@ -179,7 +179,7 @@ static void handle_exit()
       node = data->next;
 
       while (node != NULL) {
-         struct data_part *temp = node;
+         struct page *temp = node;
          node = node->next;
          free(temp);
       }
