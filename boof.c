@@ -13,19 +13,12 @@
 // ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdnoreturn.h>
 #include <string.h>
 #include <errno.h>
-
-#ifdef USE_POSIX
-#  include <unistd.h>
-#endif
-
-#ifdef USE_WINDOWS
-#  include <windows.h>
-#endif
 
 enum
 {
@@ -58,9 +51,6 @@ static size_t load_program (void);
 static void print_help (void);
 static void print_version (void);
 static const char *get_base_name (const char *name);
-static noreturn void error (const char *message);
-static noreturn void errorp (const char *message);
-static noreturn void abort_program (void);
 
 int main(int argc, char **argv)
 {
@@ -75,7 +65,7 @@ int main(int argc, char **argv)
    program_name = get_base_name(argv[0]);
 
    if (atexit(handle_exit) != 0) {
-      errorp("failed to register exit callback");
+      err(EXIT_FAILURE, "failed to register exit callback");
    }
 
    parse_options(argc, argv);
@@ -83,7 +73,7 @@ int main(int argc, char **argv)
 
    data = calloc(1, sizeof(struct data_part));
    if (data == NULL) {
-      errorp("calloc");
+      err(EXIT_FAILURE, "failed to allocate memory");
    }
 
    memory = data->body;
@@ -131,7 +121,7 @@ int main(int argc, char **argv)
                if (data->prev == NULL) {
                   data->prev = calloc(1, sizeof(struct data_part));
                   if (data->prev == NULL) {
-                     errorp("calloc");
+                     err(EXIT_FAILURE, "failed to allocate memory");
                   }
                   data->prev->next = data;
                }
@@ -149,7 +139,7 @@ int main(int argc, char **argv)
                if (data->next == NULL) {
                   data->next = calloc(1, sizeof(struct data_part));
                   if (data->next == NULL) {
-                     errorp("calloc");
+                     err(EXIT_FAILURE, "failed to allocate memory");
                   }
                   data->next->prev = data;
                }
@@ -164,7 +154,7 @@ int main(int argc, char **argv)
                loop_max_depth += LOOP_EXPAND_SIZE;
                loop_pointers = realloc(loop_pointers, loop_max_depth * sizeof(struct loop_pointer));
                if (loop_pointers == NULL) {
-                  errorp("realloc");
+                  err(EXIT_FAILURE, "failed to reallocate memory");
                }
             }
             if (memory[cursor / 8] & 1 << cursor % 8) {
@@ -258,7 +248,7 @@ static void parse_options(int argc, char **argv)
                exit(EXIT_SUCCESS);
             }
             else {
-               error("unrecognized option (accepts either --help or --version)");
+               errx(EXIT_FAILURE, "unrecognized option (accepts either --help or --version)");
             }
          }
          else if (argv[i][1] == 'h') {
@@ -270,7 +260,7 @@ static void parse_options(int argc, char **argv)
             exit(EXIT_SUCCESS);
          }
          else {
-            error("unrecognized option (accepts either -h or -V)");
+            errx(EXIT_FAILURE, "unrecognized option (accepts either -h or -V)");
          }
       }
       else if (input_name == NULL) {
@@ -281,7 +271,7 @@ static void parse_options(int argc, char **argv)
          }
       }
       else {
-         error("too many parameters (see --help for usage)");
+         errx(EXIT_FAILURE, "too many parameters (see --help for usage)");
       }
    }
 }
@@ -298,14 +288,14 @@ static size_t load_program()
    else {
       input_file = fopen(input_name, "r");
       if (input_file == NULL) {
-         errorp(input_name);
+         err(EXIT_FAILURE, input_name);
       }
    }
 
    if (input_file != stdin && fseek(input_file, 0, SEEK_END) == 0) {
       long tell_result = ftell(input_file);
       if (tell_result < 0) {
-         errorp(input_name);
+         err(EXIT_FAILURE, input_name);
       }
 
       program_size = (size_t)tell_result;
@@ -313,17 +303,17 @@ static size_t load_program()
       code = malloc(program_size);
       if (code == NULL) {
          fclose(input_file);
-         errorp("malloc");
+         err(EXIT_FAILURE, "failed to allocate memory");
       }
 
       if (fseek(input_file, 0, SEEK_SET) < 0) {
          fclose(input_file);
-         errorp(input_name);
+         err(EXIT_FAILURE, input_name);
       }
 
       if (fread(code, program_size, 1, input_file) != 1) {
          fclose(input_file);
-         errorp(input_name);
+         err(EXIT_FAILURE, input_name);
       }
 
       fclose(input_file);
@@ -337,7 +327,7 @@ static size_t load_program()
             code = realloc(code, limit);
             if (code == NULL) {
                fclose(input_file);
-               errorp("realloc");
+               err(EXIT_FAILURE, "failed to reallocate memory");
             }
          }
 
@@ -345,7 +335,7 @@ static size_t load_program()
 
          if (ferror(input_file)) {
             fclose(input_file);
-            errorp(input_name);
+            err(EXIT_FAILURE, input_name);
          }
       }
    }
@@ -383,94 +373,6 @@ static const char *get_base_name(const char *name)
    }
 
    return base + 1;
-}
-
-static void error(const char *message)
-{
-#ifdef USE_POSIX
-   if (isatty(fileno(stderr))) {
-      fprintf(stderr, "\033[1m%s: \033[31merror: \033[0;1m%s\033[0m\n",
-              program_name, message);
-      abort_program();
-   }
-#endif
-
-#ifdef USE_WINDOWS
-   HANDLE hstdout = GetStdHandle(STD_OUTPUT_HANDLE);
-   SetConsoleTextAttribute(hstdout, FOREGROUND_RED|FOREGROUND_INTENSITY);
-#endif
-
-   fprintf(stderr, "%s: error: %s\n", program_name, message);
-
-#ifdef USE_WINDOWS
-   SetConsoleTextAttribute(hstdout, 0);
-#endif
-
-   abort_program();
-}
-
-static void errorp(const char *message)
-{
-   const char *error = strerror(errno);
-
-#ifdef USE_WINDOWS
-   HANDLE hstdout = GetStdHandle(STD_OUTPUT_HANDLE);
-#endif
-
-#ifdef USE_POSIX
-   if (isatty(fileno(stderr))) {
-      fprintf(stderr, "\033[1m%s: \033[31merror: \033[0;1m%s: %s\033[0m\n",
-              program_name, message, error);
-      abort_program();
-   }
-#endif
-
-#ifdef USE_WINDOWS
-   SetConsoleTextAttribute(hstdout, FOREGROUND_RED|FOREGROUND_INTENSITY);
-#endif
-
-   fprintf(stderr, "%s: error: %s: %s\n", program_name, message,
-           error);
-
-#ifdef USE_WINDOWS
-   SetConsoleTextAttribute(hstdout, 0);
-#endif
-
-   abort_program();
-}
-
-static void abort_program()
-{
-#ifdef USE_WINDOWS
-   HANDLE hstdout = INVALID_HANDLE;
-#endif
-
-   if (line == 0) {
-      exit(EXIT_FAILURE);
-   }
-
-#ifdef USE_POSIX
-   if (isatty(fileno(stderr))) {
-      fprintf(stderr,
-              "\033[1m%s: aborting at line %lu, column %lu\033[0m\n",
-              program_name, line, column);
-      exit(EXIT_FAILURE);
-   }
-#endif
-
-#ifdef USE_WINDOWS
-   hstdout = GetStdHandle(STD_OUTPUT_HANDLE);
-   SetConsoleTextAttribute(hstdout, FOREGROUND_INTENSITY);
-#endif
-
-   fprintf(stderr, "%s: aborting at line %lu, column %lu\n", program_name,
-           line, column);
-
-#ifdef USE_WINDOWS
-   SetConsoleTextAttribute(hstdout, 0);
-#endif
-
-   exit(EXIT_FAILURE);
 }
 
 /* vim: set sts=3 sw=3 et: */
