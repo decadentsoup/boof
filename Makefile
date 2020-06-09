@@ -1,11 +1,10 @@
 .POSIX:
 .PHONY: all clean
 
-CFLAGS = -DVERSION=\"git-`git rev-parse HEAD`\"
-
 all: boof
 
 boof: boof.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -DVERSION=\"git-`git rev-parse HEAD`\" -o $@ $<
 
 clean:
 	rm -f boof
