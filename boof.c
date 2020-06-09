@@ -382,7 +382,7 @@ standard input.");
 
 static void print_version()
 {
-   puts("development");
+   puts("boof " VERSION);
 }
 
 static const char *get_base_name(name)
