@@ -1,4 +1,3 @@
-// Boolf### interpreter; implements http://samuelhughes.com/boof/
 // Copyright (c) 2012, 2020 Megan Ruggiero. All rights reserved.
 //
 // Permission to use, copy, modify, and distribute this software for any
