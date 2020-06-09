@@ -31,16 +31,10 @@ struct data_part
    unsigned char body[DATA_PART_BODY_SIZE];
 };
 
-struct loop_pointer
-{
-   unsigned long line, column;
-   size_t offset;
-};
-
 static const char *input_name;
 static char *code;
 static struct data_part *data;
-static struct loop_pointer *loop_pointers;
+static size_t *loop_pointers;
 
 static void handle_exit(void);
 static void parse_options(int argc, char **argv);
@@ -132,11 +126,11 @@ int main(int argc, char **argv)
          case '[': /* recursive loop start */
             if (loop_depth >= loop_max_depth) {
                loop_max_depth += LOOP_EXPAND_SIZE;
-               loop_pointers = xrealloc(loop_pointers, loop_max_depth * sizeof(struct loop_pointer));
+               loop_pointers = xrealloc(loop_pointers, loop_max_depth * sizeof(size_t));
             }
 
             if (memory[cursor / 8] & 1 << cursor % 8) {
-               loop_pointers[loop_depth++].offset = offset;
+               loop_pointers[loop_depth++] = offset;
             } else {
                int depth = 0;
 
@@ -152,7 +146,7 @@ int main(int argc, char **argv)
          case ']': /* recursive loop end */
             if (loop_depth > 0) {
                if (memory[cursor / 8] & 1 << cursor % 8)
-                  offset = loop_pointers[loop_depth - 1].offset;
+                  offset = loop_pointers[loop_depth - 1];
                else
                   --loop_depth;
             }
