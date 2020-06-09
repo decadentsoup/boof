@@ -192,8 +192,7 @@ int main(int argc, char **argv)
 
 static void handle_exit()
 {
-   if (code != NULL)
-      free(code);
+   free(code);
 
    if (data != NULL) {
       struct data_part *node = data->prev;
@@ -213,8 +212,7 @@ static void handle_exit()
       free(data);
    }
 
-   if (loop_pointers != NULL)
-      free(loop_pointers);
+   free(loop_pointers);
 }
 
 static void parse_options(int argc, char **argv)
