@@ -37,15 +37,15 @@ struct loop_pointer
    size_t offset;
 };
 
-static const char *input_name = NULL;
-static char *code = NULL;
-static struct data_part *data = NULL;
-static struct loop_pointer *loop_pointers = NULL;
-static unsigned long line = 0, column = 0;
+static const char *input_name;
+static char *code;
+static struct data_part *data;
+static struct loop_pointer *loop_pointers;
+static unsigned long line, column;
 
-static void handle_exit (void);
-static void parse_options (int argc, char **argv);
-static size_t load_program (void);
+static void handle_exit(void);
+static void parse_options(int argc, char **argv);
+static size_t load_program(void);
 
 int main(int argc, char **argv)
 {
