@@ -1,0 +1,10 @@
+# Ignore ViM swap files and backups
+.*.swp
+*~
+
+# Ignore generated binaries
+interp-clang
+interp-clang-ansi
+interp-gcc
+interp-gcc-ansi
+interp-tcc
