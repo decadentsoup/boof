@@ -46,8 +46,8 @@ static unsigned long line, column;
 static void handle_exit(void);
 static void parse_options(int argc, char **argv);
 static size_t load_program(void);
-static void xcalloc(size_t);
-static void xrealloc(void *, size_t);
+static void *xcalloc(size_t);
+static void *xrealloc(void *, size_t);
 
 int main(int argc, char **argv)
 {
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
    parse_options(argc, argv);
    program_size = load_program();
 
-   data = xcalloc(1, sizeof(struct data_part));
+   data = xcalloc(sizeof(struct data_part));
 
    memory = data->body;
 
@@ -109,7 +109,7 @@ int main(int argc, char **argv)
                --cursor;
             } else {
                if (data->prev == NULL) {
-                  data->prev = xcalloc(1, sizeof(struct data_part));
+                  data->prev = xcalloc(sizeof(struct data_part));
                   data->prev->next = data;
                }
 
@@ -124,7 +124,7 @@ int main(int argc, char **argv)
                ++cursor;
             } else {
                if (data->next == NULL) {
-                  data->next = xcalloc(1, sizeof(struct data_part));
+                  data->next = xcalloc(sizeof(struct data_part));
                   data->next->prev = data;
                }
 
@@ -282,7 +282,7 @@ static size_t load_program()
    return program_size;
 }
 
-static void xcalloc(size_t size)
+static void *xcalloc(size_t size)
 {
    void *ptr;
 
@@ -292,7 +292,7 @@ static void xcalloc(size_t size)
    return ptr;
 }
 
-static void xrealloc(void *ptr, size_t size)
+static void *xrealloc(void *ptr, size_t size)
 {
    if (!(ptr = realloc(ptr, size)))
       err(EXIT_FAILURE, "failed to reallocate memory");
