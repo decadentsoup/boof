@@ -1,0 +1,13 @@
+# Boolf interpreter
+
+This is a Boolf interpreter that I wrote for fun. Boof is a derivative of the Turing tarpit esoteric programming language Brainf designed around bit manipulating instead of whole integers.
+
+The Boof language is described here: http://samuelhughes.com/boof/
+
+To compile the program, just run `make`.
+
+Multiple examples are provided with this distribution and may be passed to the interpreter like so:
+
+	./boof examples/hello.boof
+
+When no input name is given, the interpreter will read until the first end of file indicator, then continue reading for data.
