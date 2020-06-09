@@ -254,64 +254,35 @@ static void parse_options(int argc, char **argv)
       if (input_name)
          errx(EXIT_FAILURE, "too many parameters (see --help for usage)");
 
-      input_name = argv[optind++];
+      if (!freopen((input_name = argv[optind++]), "rb", stdin))
+         err(EXIT_FAILURE, input_name);
    }
 }
 
 static size_t load_program()
 {
-   size_t program_size = 0;
-   FILE *input_file = NULL;
+   enum { ALLOC_SIZE = 1024 };
 
-   if (input_name == NULL) {
+   if (!input_name)
       input_name = "<stdin>";
-      input_file = stdin;
-   } else if (!(input_file = fopen(input_name, "r"))) {
-      err(EXIT_FAILURE, input_name);
-   }
 
-   if (input_file != stdin && fseek(input_file, 0, SEEK_END) == 0) {
-      long tell_result = ftell(input_file);
-      if (tell_result < 0)
-         err(EXIT_FAILURE, input_name);
+   size_t program_size = 0, limit = 0;
 
-      program_size = (size_t)tell_result;
-
-      if (!(code = malloc(program_size))) {
-         fclose(input_file);
-         err(EXIT_FAILURE, "failed to allocate memory");
-      }
-
-      if (fseek(input_file, 0, SEEK_SET) < 0) {
-         fclose(input_file);
-         err(EXIT_FAILURE, input_name);
-      }
-
-      if (fread(code, program_size, 1, input_file) != 1) {
-         fclose(input_file);
-         err(EXIT_FAILURE, input_name);
-      }
-
-      fclose(input_file);
-   } else {
-      size_t limit = 0;
-
-      while (!feof(input_file)) {
-         if (program_size >= limit) {
-            limit += 512;
-            code = realloc(code, limit);
-            if (code == NULL) {
-               fclose(input_file);
-               err(EXIT_FAILURE, "failed to reallocate memory");
-            }
+   while (!feof(stdin)) {
+      if (program_size >= limit) {
+         limit += ALLOC_SIZE;
+         code = realloc(code, limit);
+         if (code == NULL) {
+            fclose(stdin);
+            err(EXIT_FAILURE, "failed to reallocate memory");
          }
+      }
 
-         program_size += fread(&code[limit - 512], 1, 512, input_file);
+      program_size += fread(&code[limit - ALLOC_SIZE], 1, ALLOC_SIZE, stdin);
 
-         if (ferror(input_file)) {
-            fclose(input_file);
-            err(EXIT_FAILURE, input_name);
-         }
+      if (ferror(stdin)) {
+         fclose(stdin);
+         err(EXIT_FAILURE, input_name);
       }
    }
 
