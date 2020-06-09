@@ -60,17 +60,14 @@ int main(int argc, char **argv)
    size_t loop_max_depth = 0, loop_depth = 0;
    size_t program_size = 0;
 
-   if (atexit(handle_exit) != 0) {
+   if (atexit(handle_exit))
       err(EXIT_FAILURE, "failed to register exit callback");
-   }
 
    parse_options(argc, argv);
    program_size = load_program();
 
-   data = calloc(1, sizeof(struct data_part));
-   if (data == NULL) {
+   if (!(data = calloc(1, sizeof(struct data_part))))
       err(EXIT_FAILURE, "failed to allocate memory");
-   }
 
    memory = data->body;
 
@@ -89,36 +86,36 @@ int main(int argc, char **argv)
                input = c == EOF ? 0 : (char)c;
                input_bits = 0;
             }
-            if (input & 1 << input_bits++) {
+
+            if (input & 1 << input_bits++)
                memory[cursor / 8] |= 1 << cursor % 8;
-            }
-            else {
+            else
                memory[cursor / 8] &= ~(1 << cursor % 8);
-            }
+
             break;
          case ';': /* write bit */
-            if (memory[cursor / 8] & 1 << cursor % 8) {
+            if (memory[cursor / 8] & 1 << cursor % 8)
                output |= 1 << output_bits++;
-            }
-            else {
+            else
                output &= ~(1 << output_bits++);
-            }
+
             if (output_bits == 8) {
                putchar(output);
                output = 0;
                output_bits = 0;
             }
+
             break;
          case '<': /* select left */
             if (cursor > 0) {
                --cursor;
-            }
-            else {
+            } else {
                if (data->prev == NULL) {
                   data->prev = calloc(1, sizeof(struct data_part));
-                  if (data->prev == NULL) {
+
+                  if (data->prev == NULL)
                      err(EXIT_FAILURE, "failed to allocate memory");
-                  }
+
                   data->prev->next = data;
                }
 
@@ -126,17 +123,18 @@ int main(int argc, char **argv)
                memory = data->body;
                cursor = DATA_PART_BODY_SIZE * 8 - 1;
             }
+
             break;
          case '>': /* select right */
             if (cursor < DATA_PART_BODY_SIZE * 8 - 1) {
                ++cursor;
-            }
-            else {
+            } else {
                if (data->next == NULL) {
                   data->next = calloc(1, sizeof(struct data_part));
-                  if (data->next == NULL) {
+
+                  if (data->next == NULL)
                      err(EXIT_FAILURE, "failed to allocate memory");
-                  }
+
                   data->next->prev = data;
                }
 
@@ -144,31 +142,30 @@ int main(int argc, char **argv)
                memory = data->body;
                cursor = 0;
             }
+
             break;
          case '[': /* recursive loop start */
             if (loop_depth >= loop_max_depth) {
                loop_max_depth += LOOP_EXPAND_SIZE;
                loop_pointers = realloc(loop_pointers, loop_max_depth * sizeof(struct loop_pointer));
-               if (loop_pointers == NULL) {
+               if (loop_pointers == NULL)
                   err(EXIT_FAILURE, "failed to reallocate memory");
-               }
             }
             if (memory[cursor / 8] & 1 << cursor % 8) {
                loop_pointers[loop_depth].line = line;
                loop_pointers[loop_depth].column = column;
                loop_pointers[loop_depth++].offset = offset;
-            }
-            else {
+            } else {
                int depth = 0;
+
                while (offset++ < program_size) {
-                  if (code[offset] == '[') {
+                  if (code[offset] == '[')
                      ++depth;
-                  }
-                  else if (code[offset] == ']' && depth-- == 0) {
+                  else if (code[offset] == ']' && depth-- == 0)
                      break;
-                  }
                }
             }
+
             break;
          case ']': /* recursive loop end */
             if (loop_depth > 0) {
@@ -176,11 +173,11 @@ int main(int argc, char **argv)
                   line = loop_pointers[loop_depth - 1].line;
                   column = loop_pointers[loop_depth - 1].column;
                   offset = loop_pointers[loop_depth - 1].offset;
-               }
-               else {
+               } else {
                   --loop_depth;
                }
             }
+
             break;
          case '\n': /* update line information */
             ++line;
@@ -198,9 +195,8 @@ int main(int argc, char **argv)
 
 static void handle_exit()
 {
-   if (code != NULL) {
+   if (code != NULL)
       free(code);
-   }
 
    if (data != NULL) {
       struct data_part *node = data->prev;
@@ -220,9 +216,8 @@ static void handle_exit()
       free(data);
    }
 
-   if (loop_pointers != NULL) {
+   if (loop_pointers != NULL)
       free(loop_pointers);
-   }
 }
 
 static void parse_options(int argc, char **argv)
@@ -234,39 +229,30 @@ static void parse_options(int argc, char **argv)
          if (argv[i][1] == '-') {
             if (argv[i][2] == 0) {
                end_of_args = 1;
-            }
-            else if (!strcmp(argv[i], "--help")) {
+            } else if (!strcmp(argv[i], "--help")) {
                print_help(argv[0]);
                exit(EXIT_SUCCESS);
-            }
-            else if (!strcmp(argv[i], "--version")) {
+            } else if (!strcmp(argv[i], "--version")) {
                print_version();
                exit(EXIT_SUCCESS);
-            }
-            else {
+            } else {
                errx(EXIT_FAILURE, "unrecognized option (accepts either --help or --version)");
             }
-         }
-         else if (argv[i][1] == 'h') {
+         } else if (argv[i][1] == 'h') {
             print_help(argv[0]);
             exit(EXIT_SUCCESS);
-         }
-         else if (argv[i][1] == 'V') {
+         } else if (argv[i][1] == 'V') {
             print_version();
             exit(EXIT_SUCCESS);
-         }
-         else {
+         } else {
             errx(EXIT_FAILURE, "unrecognized option (accepts either -h or -V)");
          }
-      }
-      else if (input_name == NULL) {
+      } else if (input_name == NULL) {
          input_name = argv[i];
 
-         if (getenv("POSIXLY_CORRECT") != NULL) {
+         if (getenv("POSIXLY_CORRECT") != NULL)
             end_of_args = 1;
-         }
-      }
-      else {
+      } else {
          errx(EXIT_FAILURE, "too many parameters (see --help for usage)");
       }
    }
@@ -280,24 +266,18 @@ static size_t load_program()
    if (input_name == NULL) {
       input_name = "<stdin>";
       input_file = stdin;
-   }
-   else {
-      input_file = fopen(input_name, "r");
-      if (input_file == NULL) {
-         err(EXIT_FAILURE, input_name);
-      }
+   } else if (!(input_file = fopen(input_name, "r"))) {
+      err(EXIT_FAILURE, input_name);
    }
 
    if (input_file != stdin && fseek(input_file, 0, SEEK_END) == 0) {
       long tell_result = ftell(input_file);
-      if (tell_result < 0) {
+      if (tell_result < 0)
          err(EXIT_FAILURE, input_name);
-      }
 
       program_size = (size_t)tell_result;
 
-      code = malloc(program_size);
-      if (code == NULL) {
+      if (!(code = malloc(program_size))) {
          fclose(input_file);
          err(EXIT_FAILURE, "failed to allocate memory");
       }
@@ -343,8 +323,7 @@ static void print_help(const char *argv0)
 {
    printf("Usage: %s [<input-name>]\n", argv0);
    puts("");
-   puts("Interpret a Boolf### program. If no input file is given, reads \
-standard input.");
+   puts("Interpret a Boolf### program. If no input file is given, reads standard input.");
    puts("");
    puts("Options:");
    puts("  -h, --help     print this help message and exit");
@@ -355,5 +334,3 @@ static void print_version()
 {
    puts("boof " VERSION);
 }
-
-/* vim: set sts=3 sw=3 et: */
