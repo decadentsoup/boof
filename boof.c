@@ -38,7 +38,6 @@ struct loop_pointer
    size_t offset;
 };
 
-static const char *program_name = "?";
 static const char *input_name = NULL;
 static char *code = NULL;
 static struct data_part *data = NULL;
@@ -48,9 +47,8 @@ static unsigned long line = 0, column = 0;
 static void handle_exit (void);
 static void parse_options (int argc, char **argv);
 static size_t load_program (void);
-static void print_help (void);
+static void print_help (const char *argv0);
 static void print_version (void);
-static const char *get_base_name (const char *name);
 
 int main(int argc, char **argv)
 {
@@ -61,8 +59,6 @@ int main(int argc, char **argv)
    size_t offset = 0;
    size_t loop_max_depth = 0, loop_depth = 0;
    size_t program_size = 0;
-
-   program_name = get_base_name(argv[0]);
 
    if (atexit(handle_exit) != 0) {
       err(EXIT_FAILURE, "failed to register exit callback");
@@ -240,7 +236,7 @@ static void parse_options(int argc, char **argv)
                end_of_args = 1;
             }
             else if (!strcmp(argv[i], "--help")) {
-               print_help();
+               print_help(argv[0]);
                exit(EXIT_SUCCESS);
             }
             else if (!strcmp(argv[i], "--version")) {
@@ -252,7 +248,7 @@ static void parse_options(int argc, char **argv)
             }
          }
          else if (argv[i][1] == 'h') {
-            print_help();
+            print_help(argv[0]);
             exit(EXIT_SUCCESS);
          }
          else if (argv[i][1] == 'V') {
@@ -343,9 +339,9 @@ static size_t load_program()
    return program_size;
 }
 
-static void print_help()
+static void print_help(const char *argv0)
 {
-   printf("Usage: %s [<input-name>]\n", program_name);
+   printf("Usage: %s [<input-name>]\n", argv0);
    puts("");
    puts("Interpret a Boolf### program. If no input file is given, reads \
 standard input.");
@@ -358,21 +354,6 @@ standard input.");
 static void print_version()
 {
    puts("boof " VERSION);
-}
-
-static const char *get_base_name(const char *name)
-{
-   const char *base = strrchr(name, '/');
-
-   if (base == NULL) {
-      base = strrchr(name, '\\');
-
-      if (base == NULL || base[1] == ':') {
-         return name;
-      }
-   }
-
-   return base + 1;
 }
 
 /* vim: set sts=3 sw=3 et: */
