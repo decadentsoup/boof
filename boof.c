@@ -26,12 +26,6 @@
 #  include <windows.h>
 #endif
 
-#ifdef __STDC__
-#  define PARAMS(params) params
-#else
-#  define PARAMS(params) ()
-#endif
-
 #if defined(__GCC__) || defined(__clang__)
 #  define NORET __attribute__((noreturn))
 #else
@@ -63,19 +57,17 @@ static struct data_part *data = NULL;
 static struct loop_pointer *loop_pointers = NULL;
 static unsigned long line = 0, column = 0;
 
-static void handle_exit PARAMS((void));
-static void parse_options PARAMS((int argc, char **argv));
-static size_t load_program PARAMS((void));
-static void print_help PARAMS((void));
-static void print_version PARAMS((void));
-static const char *get_base_name PARAMS((const char *name));
-static void error PARAMS((const char *message)) NORET;
-static void errorp PARAMS((const char *message)) NORET;
-static void abort_program PARAMS((void)) NORET;
+static void handle_exit (void);
+static void parse_options (int argc, char **argv);
+static size_t load_program (void);
+static void print_help (void);
+static void print_version (void);
+static const char *get_base_name (const char *name);
+static void error (const char *message) NORET;
+static void errorp (const char *message) NORET;
+static void abort_program (void) NORET;
 
-int main(argc, argv)
-   int argc;
-   char **argv;
+int main(int argc, char **argv)
 {
    size_t cursor = 0;
    unsigned char *memory = NULL;
@@ -252,9 +244,7 @@ static void handle_exit()
    }
 }
 
-static void parse_options(argc, argv)
-   int argc;
-   char **argv;
+static void parse_options(int argc, char **argv)
 {
    int i = 1, end_of_args = 0;
 
@@ -385,8 +375,7 @@ static void print_version()
    puts("boof " VERSION);
 }
 
-static const char *get_base_name(name)
-   const char *name;
+static const char *get_base_name(const char *name)
 {
    const char *base = strrchr(name, '/');
 
@@ -401,8 +390,7 @@ static const char *get_base_name(name)
    return base + 1;
 }
 
-static void error(message)
-   const char *message;
+static void error(const char *message)
 {
 #ifdef USE_POSIX
    if (isatty(fileno(stderr))) {
@@ -426,8 +414,7 @@ static void error(message)
    abort_program();
 }
 
-static void errorp(message)
-   const char *message;
+static void errorp(const char *message)
 {
    const char *error = strerror(errno);
 
